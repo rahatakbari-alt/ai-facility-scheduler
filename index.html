@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Facility Scheduler</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Base ── */
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f4f6f9;
+      background-image:
+        radial-gradient(ellipse at 20% 0%, rgba(99,102,241,0.05) 0%, transparent 55%),
+        radial-gradient(ellipse at 80% 100%, rgba(139,92,246,0.03) 0%, transparent 50%);
+      background-attachment: fixed;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 56px 16px 80px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 640px;
+    }
+
+    /* ── Header ── */
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .header-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #818cf8;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 999px;
+      padding: 5px 14px;
+      margin-bottom: 20px;
+    }
+
+    header h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 16px;
+    }
+
+    header p {
+      font-size: 0.95rem;
+      color: #64748b;
+      line-height: 1.7;
+      max-width: 420px;
+      margin: 0 auto;
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(99,102,241,0); }
+    }
+
+    /* ── Card base ── */
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      overflow: hidden;
+    }
+
+    /* ── Schedule section ── */
+    .schedule-section {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(15,23,42,0.06);
+    }
+
+    .schedule-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .schedule-header h2 {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #94a3b8;
+    }
+
+    .hours-pill {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #818cf8;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 999px;
+      padding: 4px 12px;
+    }
+
+    .schedule-legend {
+      display: flex;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.75rem;
+      color: #475569;
+    }
+
+    .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .legend-dot.booked { background: #ef4444; opacity: 0.7; }
+    .legend-dot.free   { background: #10b981; opacity: 0.7; }
+
+    /* ── Per-room timeline bars ── */
+    .room-rows { display: flex; flex-direction: column; gap: 10px; }
+
+    .room-row { display: flex; align-items: center; gap: 12px; }
+
+    .room-row-name {
+      width: 118px;
+      flex-shrink: 0;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #64748b;
+    }
+
+    .room-timeline {
+      flex: 1;
+      position: relative;
+      height: 20px;
+      border-radius: 6px;
+      background: rgba(16,185,129,0.15);
+      overflow: hidden;
+      border: 1px solid rgba(16,185,129,0.1);
+    }
+
+    .room-booked-block {
+      position: absolute;
+      top: 0; bottom: 0;
+      background: rgba(239,68,68,0.3);
+      border-left: 2px solid rgba(239,68,68,0.6);
+      border-right: 2px solid rgba(239,68,68,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.58rem;
+      font-weight: 700;
+      color: #fca5a5;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    /* ── Schedule booking rows ── */
+    .schedule-rows {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid #e8edf4;
+      margin-top: 18px;
+      padding-top: 14px;
+      gap: 2px;
+    }
+
+    .sched-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .sched-row:last-child { border-bottom: none; }
+
+    .sched-name {
+      font-weight: 600;
+      font-size: 0.88rem;
+      color: #1e293b;
+    }
+
+    .sched-time {
+      font-size: 0.82rem;
+      color: #475569;
+    }
+
+    .booked-badge {
+      background: rgba(239,68,68,0.12);
+      color: #f87171;
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 999px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      letter-spacing: 0.03em;
+    }
+
+    /* ── Controls ── */
+    .controls-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .select-wrap {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .select-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #64748b;
+    }
+
+    .select-box-wrap { position: relative; }
+
+    .room-select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 44px 14px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1e293b;
+      cursor: pointer;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+      box-shadow: 0 1px 4px rgba(15,23,42,0.06);
+    }
+
+    .room-select option { background: #ffffff; }
+
+    .room-select:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+
+    .room-select:hover { border-color: #c4cad4; }
+
+    .select-arrow {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+    }
+
+    button {
+      position: relative;
+      width: 100%;
+      background: linear-gradient(130deg, #4338ca 0%, #6366f1 45%, #818cf8 100%);
+      background-size: 200% 200%;
+      color: #fff;
+      border: none;
+      padding: 16px 40px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      font-family: inherit;
+      overflow: hidden;
+      box-shadow: 0 4px 22px rgba(99,102,241,0.38),
+                  0 1px 0 rgba(255,255,255,0.10) inset;
+      transition: box-shadow 0.3s, transform 0.18s, background-position 0.5s;
+      animation: btn-shift 6s ease infinite;
+    }
+
+    @keyframes btn-shift {
+      0%, 100% { background-position: 0% 50%; }
+      50%       { background-position: 100% 50%; }
+    }
+
+    /* Shimmer sweep on hover */
+    button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        108deg,
+        transparent 38%,
+        rgba(255,255,255,0.15) 50%,
+        transparent 62%
+      );
+      transform: translateX(-110%);
+      pointer-events: none;
+    }
+
+    button:hover::after {
+      transform: translateX(110%);
+      transition: transform 0.55s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(99,102,241,0.60),
+                  0 0 0 1px rgba(129,140,248,0.25),
+                  0 1px 0 rgba(255,255,255,0.12) inset;
+    }
+
+    button:active {
+      transform: translateY(0) scale(0.98);
+      box-shadow: 0 3px 14px rgba(99,102,241,0.40),
+                  0 1px 0 rgba(255,255,255,0.08) inset;
+    }
+
+    button:disabled {
+      background: #e8edf4;
+      color: #94a3b8;
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+      animation: none;
+    }
+
+    button:disabled::after { display: none; }
+
+    /* Inline spinner inside button while loading */
+    .btn-spinner {
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(255,255,255,0.25);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* ── Results ── */
+    #results { min-height: 80px; }
+
+    .empty-state {
+      text-align: center;
+      color: #1e293b;
+      padding: 48px 0;
+      font-size: 0.9rem;
+    }
+
+    .no-schedule-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 28px 24px;
+      text-align: center;
+    }
+    .no-schedule-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #475569;
+      margin: 0;
+    }
+    .no-schedule-sub {
+      font-size: 0.82rem;
+      color: #64748b;
+      margin: 0;
+      line-height: 1.6;
+    }
+    .no-schedule-sub strong {
+      color: #818cf8;
+    }
+
+    .results-section-label {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #94a3b8;
+      margin-bottom: 16px;
+    }
+
+    /* ── Room result cards ── */
+    .room-result {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 18px;
+      overflow: hidden;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 16px rgba(15,23,42,0.07);
+      animation: fadeUp 0.35s ease both;
+    }
+
+    .room-result-header {
+      padding: 20px 22px 16px;
+      border-bottom: 1px solid #f0f3f8;
+      background: linear-gradient(90deg, rgba(99,102,241,0.04) 0%, transparent 100%);
+    }
+
+    .room-result-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+
+    .room-result-name {
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: #1e293b;
+      letter-spacing: -0.02em;
+    }
+
+    .slot-count-pill {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: #818cf8;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 999px;
+      padding: 4px 11px;
+      letter-spacing: 0.02em;
+    }
+
+    .room-result-sub {
+      font-size: 0.76rem;
+      color: #64748b;
+      font-weight: 500;
+    }
+
+    /* ── Feedback panels (warn / error / no-slots) ── */
+    .feedback-panel {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 16px 18px;
+      border-radius: 12px;
+      margin: 16px 18px 8px;
+    }
+
+    .feedback-panel.warn {
+      background: rgba(245,158,11,0.07);
+      border: 1px solid rgba(245,158,11,0.2);
+    }
+
+    .feedback-panel.err {
+      background: rgba(239,68,68,0.07);
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+
+    .feedback-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feedback-icon.warn { background: rgba(245,158,11,0.12); }
+    .feedback-icon.err  { background: rgba(239,68,68,0.12); }
+
+    .feedback-body { display: flex; flex-direction: column; gap: 4px; }
+
+    .feedback-title {
+      font-size: 0.86rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .feedback-title.warn { color: #fbbf24; }
+    .feedback-title.err  { color: #f87171; }
+
+    .feedback-sub {
+      font-size: 0.77rem;
+      color: #64748b;
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    .feedback-hint {
+      font-size: 0.72rem;
+      color: #475569;
+      margin: 4px 0 0;
+      padding: 6px 10px;
+      background: rgba(255,255,255,0.03);
+      border-left: 2px solid rgba(239,68,68,0.3);
+      border-radius: 2px;
+      line-height: 1.5;
+    }
+
+    /* ── No available slots card ── */
+    .no-slots-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 10px 18px 18px;
+      padding: 14px 16px;
+      background: rgba(239,68,68,0.05);
+      border: 1px solid rgba(239,68,68,0.12);
+      border-radius: 10px;
+    }
+
+    .no-slots-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(239,68,68,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .no-slots-title {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: #f87171;
+      margin: 0 0 2px;
+    }
+
+    .no-slots-sub {
+      font-size: 0.72rem;
+      color: #475569;
+      margin: 0;
+    }
+
+    /* Legacy – keep for safety */
+    .no-slots {
+      padding: 16px 22px 20px;
+      font-size: 0.84rem;
+      color: #334155;
+      font-style: italic;
+    }
+
+    /* ── All rooms fully booked state ── */
+    .all-booked-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 52px 24px;
+      text-align: center;
+    }
+
+    .all-booked-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(239,68,68,0.10);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .all-booked-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #f87171;
+      margin: 0;
+    }
+
+    .all-booked-sub {
+      font-size: 0.78rem;
+      color: #475569;
+      margin: 0;
+      max-width: 320px;
+      line-height: 1.6;
+    }
+
+    /* ── AI Recommendation card ── */
+    .rec-wrap { padding: 18px 18px 6px; }
+
+    .rec-card {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);
+      border: 1px solid rgba(99,102,241,0.35);
+      border-radius: 14px;
+      padding: 22px 20px 20px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 0 0 1px rgba(99,102,241,0.2),
+        0 8px 32px rgba(99,102,241,0.35),
+        0 2px 8px rgba(0,0,0,0.4);
+    }
+
+    .rec-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at top right, rgba(165,180,252,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse at bottom left, rgba(99,102,241,0.15) 0%, transparent 55%);
+      pointer-events: none;
+    }
+
+    .rec-label {
+      font-size: 0.6rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: #a5b4fc;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rec-label-icon { font-size: 0.85rem; }
+
+    .rec-time {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+      line-height: 1;
+    }
+
+    .rec-meta {
+      font-size: 0.8rem;
+      color: #a5b4fc;
+      font-weight: 500;
+    }
+
+    .rec-badge {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      background: rgba(165,180,252,0.15);
+      border: 1px solid rgba(165,180,252,0.35);
+      color: #c7d2fe;
+      font-size: 0.65rem;
+      font-weight: 800;
+      border-radius: 999px;
+      padding: 5px 13px;
+      letter-spacing: 0.06em;
+      animation: pulse-glow 2.4s ease-in-out infinite;
+    }
+
+    .rec-explanation {
+      font-size: 0.74rem;
+      color: #334155;
+      margin: 10px 0 0;
+      line-height: 1.6;
+      font-style: italic;
+    }
+
+    /* ── Other slots ── */
+    .other-heading {
+      font-size: 0.62rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #1e293b;
+      padding: 16px 22px 8px;
+    }
+
+    .room-slots {
+      padding: 0 18px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .room-slot {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.12);
+      border-radius: 10px;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .room-slot:hover {
+      background: rgba(16,185,129,0.1);
+      border-color: rgba(16,185,129,0.22);
+    }
+
+    .slot-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      flex-shrink: 0;
+      box-shadow: 0 0 6px rgba(16,185,129,0.6);
+    }
+
+    .slot-body { flex: 1; }
+
+    .slot-time {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: #34d399;
+    }
+
+    .slot-dur {
+      font-size: 0.72rem;
+      color: #334155;
+      margin-top: 2px;
+    }
+
+    .slot-badge {
+      font-size: 0.66rem;
+      font-weight: 700;
+      color: #10b981;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.22);
+      border-radius: 999px;
+      padding: 3px 10px;
+      white-space: nowrap;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── Analyzing loader ── */
+    .analyzing {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 60px 24px;
+      text-align: center;
+    }
+
+    .analyzing-dots {
+      display: flex;
+      gap: 9px;
+      align-items: center;
+    }
+
+    .analyzing-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #6366f1;
+      animation: dot-pulse 1.3s ease-in-out infinite;
+    }
+
+    .analyzing-dot:nth-child(1) { animation-delay: 0s;    background: #4f46e5; }
+    .analyzing-dot:nth-child(2) { animation-delay: 0.2s;  background: #6366f1; }
+    .analyzing-dot:nth-child(3) { animation-delay: 0.4s;  background: #818cf8; }
+
+    @keyframes dot-pulse {
+      0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
+      40%            { transform: scale(1.25); opacity: 1; }
+    }
+
+    .analyzing-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #818cf8;
+      letter-spacing: 0.01em;
+      margin: 0;
+    }
+
+    .analyzing-sub {
+      font-size: 0.74rem;
+      color: #334155;
+      margin: 0;
+    }
+
+    /* Kept for .btn-spinner usage */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(99,102,241,0.2);
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* ── Upload section ── */
+    .upload-section {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .upload-zone {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 24px 28px;
+      background: rgba(99,102,241,0.03);
+      border: 1.5px dashed rgba(99,102,241,0.22);
+      border-radius: 16px;
+      cursor: pointer;
+      text-align: center;
+      overflow: hidden;
+      transition: background 0.25s, border-color 0.25s, box-shadow 0.25s, transform 0.2s;
+    }
+
+    /* Radial glow overlay */
+    .upload-zone::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.10) 0%, transparent 68%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .upload-zone:hover::before,
+    .upload-zone.dragover::before { opacity: 1; }
+
+    .upload-zone:hover {
+      border-color: rgba(99,102,241,0.48);
+      background: rgba(99,102,241,0.055);
+    }
+
+    .upload-zone.dragover {
+      border-color: #6366f1;
+      background: rgba(99,102,241,0.09);
+      transform: scale(1.012);
+      box-shadow: 0 0 0 5px rgba(99,102,241,0.10), 0 8px 32px rgba(99,102,241,0.12);
+    }
+
+    .upload-zone.loaded {
+      border-style: solid;
+      border-color: rgba(16,185,129,0.38);
+      background: rgba(16,185,129,0.04);
+    }
+
+    .upload-zone.loaded:hover {
+      border-color: rgba(16,185,129,0.60);
+      background: rgba(16,185,129,0.07);
+    }
+
+    /* Icon container */
+    .upz-icon {
+      width: 52px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(99,102,241,0.10);
+      border-radius: 14px;
+      transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.25s;
+    }
+
+    .upload-zone:hover .upz-icon { transform: translateY(-4px); background: rgba(99,102,241,0.18); }
+    .upload-zone.dragover .upz-icon { transform: translateY(-6px) scale(1.08); background: rgba(99,102,241,0.24); }
+
+    /* Idle text */
+    .upz-title {
+      font-size: 0.93rem;
+      font-weight: 700;
+      color: #1e293b;
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+
+    .upz-hint {
+      font-size: 0.77rem;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .upz-hint em {
+      font-style: normal;
+      color: #818cf8;
+      text-decoration: underline;
+      text-decoration-color: rgba(129,140,248,0.35);
+    }
+
+    .upz-cols {
+      font-size: 0.67rem;
+      color: #94a3b8;
+      letter-spacing: 0.03em;
+      margin: 0;
+    }
+
+    /* Loaded state */
+    .upz-loaded {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: upz-pop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes upz-pop {
+      from { opacity: 0; transform: scale(0.80); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .upz-loaded-icon {
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(16,185,129,0.14);
+      border-radius: 50%;
+    }
+
+    .upz-loaded-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #10b981;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .upz-loaded-meta {
+      font-size: 0.72rem;
+      color: #64748b;
+    }
+
+    .upz-loaded-replace {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      margin-top: 2px;
+    }
+
+    /* Status messages (row count / errors) */
+    .upload-status-ok {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #10b981;
+      background: rgba(16,185,129,0.08);
+      border: 1px solid rgba(16,185,129,0.18);
+      border-radius: 8px;
+      padding: 8px 14px;
+    }
+
+    .upload-status-err {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #f87171;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.18);
+      border-radius: 8px;
+      padding: 8px 14px;
+    }
+
+    /* ── Legacy/unused selectors kept for safety ── */
+    .btn-wrap { display: flex; justify-content: center; }
+    .results-label { display: none; }
+    .slot-list { list-style: none; }
+    .slots-heading { display: none; }
+
+    /* ── Dashboard layout overrides ── */
+    body {
+      display: block;
+      padding: 0;
+      background: #f4f6f9;
+    }
+
+    /* ── Topbar ── */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(248,250,252,0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .topbar-inner {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .topbar-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      background: rgba(99,102,241,0.12);
+      border: 1px solid rgba(99,102,241,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .brand-name {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: #1e293b;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-tag {
+      font-size: 0.68rem;
+      color: #94a3b8;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+    }
+
+    /* ── Engine status badge ── */
+    .engine-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16,185,129,0.06);
+      border: 1px solid rgba(16,185,129,0.14);
+      border-radius: 999px;
+      padding: 5px 13px 5px 10px;
+    }
+
+    .engine-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      flex-shrink: 0;
+      animation: engine-pulse 2.4s ease-in-out infinite;
+    }
+
+    @keyframes engine-pulse {
+      0%, 100% { box-shadow: 0 0 0 0   rgba(16,185,129,0.55); opacity: 1; }
+      50%       { box-shadow: 0 0 0 5px rgba(16,185,129,0);    opacity: 0.8; }
+    }
+
+    .engine-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #64748b;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .engine-badge {
+      font-size: 0.6rem;
+      font-weight: 800;
+      color: #10b981;
+      background: rgba(16,185,129,0.12);
+      border-radius: 4px;
+      padding: 2px 6px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── Dashboard main area ── */
+    .dashboard {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 20px 24px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* ── Panels ── */
+    .dash-panel {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 2px 20px rgba(15,23,42,0.07);
+    }
+
+    .panel-header {
+      padding: 16px 24px 14px;
+      border-bottom: 1px solid #f0f3f8;
+      background: linear-gradient(90deg, rgba(99,102,241,0.04) 0%, transparent 70%);
+    }
+
+    .panel-title-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .panel-icon-wrap {
+      width: 30px;
+      height: 30px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.18);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .panel-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1e293b;
+      letter-spacing: -0.01em;
+    }
+
+    .panel-sub {
+      font-size: 0.72rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .panel-body {
+      padding: 20px 24px;
+    }
+
+    .panel-divider {
+      height: 1px;
+      background: #f0f3f8;
+      margin: 14px 0;
+    }
+
+    /* Compact the empty state when nested in schedule-view (vs results panel) */
+    #schedule-view .no-schedule-state {
+      padding: 12px 24px;
+      gap: 6px;
+    }
+
+    /* ── Query / Find Availability sub-section ── */
+    .query-section { }
+
+    .query-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .query-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1e293b;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── Controls — row layout in dashboard ── */
+    .controls-wrap {
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 0;
+    }
+
+    .select-wrap { flex: 1; max-width: none; }
+
+    button {
+      width: auto;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 22px;
+    }
+
+    /* ── Schedule section — nested inside a panel on light theme ── */
+    .schedule-section {
+      margin-bottom: 0;
+      border-radius: 12px;
+      padding: 18px 20px;
+      background: #f8fafc;
+      border-color: #e8edf4;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Top navigation bar ── -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-brand">
+        <div class="brand-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <rect x="3" y="3" width="7" height="7" rx="1.5" fill="#818cf8"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5" fill="#6366f1" opacity="0.6"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5" fill="#6366f1" opacity="0.6"/>
+            <rect x="14" y="14" width="7" height="7" rx="1.5" fill="#818cf8"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">AI Facility Scheduler</span>
+          <span class="brand-tag">Optimize space usage with AI-powered scheduling</span>
+        </div>
+      </div>
+      <div class="engine-status">
+        <span class="engine-dot"></span>
+        <span class="engine-label">AI Scheduling Engine</span>
+        <span class="engine-badge">Active</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Dashboard ── -->
+  <main class="dashboard">
+
+    <!-- Input panel -->
+    <div class="dash-panel">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <div class="panel-icon-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="4" width="18" height="16" rx="2" stroke="#818cf8" stroke-width="2"/>
+              <path d="M8 2v4M16 2v4M3 10h18" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="panel-title">Schedule Overview</h2>
+            <p class="panel-sub">Real-time overview of today's facility bookings</p>
+          </div>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <!-- File upload -->
+        <div class="upload-section">
+          <label class="upload-zone" for="scheduleFile" id="uploadZone">
+
+            <!-- Idle state -->
+            <div class="upz-idle" id="upzIdle">
+              <div class="upz-icon">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 15V4M12 4L8.5 7.5M12 4L15.5 7.5" stroke="#818cf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <p class="upz-title">Import schedule data</p>
+              <p class="upz-hint">Drag and drop your .xlsx or .csv file, or <em>click to browse</em></p>
+              <p class="upz-cols">Required columns: Room &middot; Start Time &middot; End Time</p>
+            </div>
+
+            <!-- Loaded state (hidden until file parsed) -->
+            <div class="upz-loaded" id="upzLoaded" style="display:none">
+              <div class="upz-loaded-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                  <path d="M20 6L9 17l-5-5" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <span class="upz-loaded-name" id="upzFileName">—</span>
+              <span class="upz-loaded-meta" id="upzFileMeta"></span>
+              <span class="upz-loaded-replace">Click to replace file</span>
+            </div>
+
+            <input type="file" id="scheduleFile" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event)"/>
+          </label>
+          <div id="upload-status"></div>
+        </div>
+
+        <div class="panel-divider"></div>
+
+        <section id="schedule-view"></section>
+
+        <div class="panel-divider"></div>
+
+        <div class="query-section">
+          <div class="query-header">
+            <div class="panel-icon-wrap">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <circle cx="11" cy="11" r="7" stroke="#818cf8" stroke-width="2"/>
+                <path d="M16.5 16.5L21 21" stroke="#818cf8" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div>
+              <h3 class="query-title">Find Availability</h3>
+              <p class="panel-sub">Configure your query and initiate the AI analysis engine</p>
+            </div>
+          </div>
+          <div class="controls-wrap">
+            <div class="select-wrap">
+              <label class="select-label" for="roomSelect">Room</label>
+              <div class="select-box-wrap">
+                <select id="roomSelect" class="room-select">
+                  <option value="all">All Rooms</option>
+                  <option value="Gym">Gym</option>
+                  <option value="Pool">Pool</option>
+                  <option value="Meeting Room 1">Meeting Room 1</option>
+                  <option value="Meeting Room 2">Meeting Room 2</option>
+                </select>
+                <svg class="select-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 8l5 5 5-5" stroke="#475569" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <button id="findBtn" onclick="findSlots()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Run Analysis
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results panel -->
+    <div class="dash-panel">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <div class="panel-icon-wrap">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6L12 2z" stroke="#818cf8" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="panel-title">Availability Analysis</h2>
+            <p class="panel-sub">AI-generated slot recommendations based on booking patterns</p>
+          </div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <section id="results">
+          <div class="no-schedule-state">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+              <path d="M12 16V8M12 8l-3 3M12 8l3 3" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <p class="no-schedule-title">No schedule data imported</p>
+            <p class="no-schedule-sub">Import a schedule file in the <strong>Schedule Overview</strong> panel to activate the AI analysis engine.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const OPEN_START = 7;
+    const OPEN_END   = 23;
+
+    let rooms = []; // populated by file upload
+
+    /* ── Time parser — returns decimal hours e.g. 9:30 → 9.5 ── */
+    function parseTime(val) {
+      if (val === null || val === undefined || val === "") return null;
+      if (typeof val === "number") {
+        if (val > 0 && val < 1) return val * 24;   // Excel serial fraction → decimal hrs
+        if (val >= 0 && val <= 24) return val;      // plain hour (may be decimal)
+      }
+      const s = String(val).replace(/^\ufeff/, "").trim().toUpperCase().replace(/\s+/g, " ");
+      // "9:00 AM" / "1:30 PM" / "09:00:00 AM"
+      const ap = s.match(/^(\d{1,2})(?::(\d{2}))?(?::\d{2})?\s*(AM|PM)$/);
+      if (ap) {
+        let h = parseInt(ap[1]);
+        const m = ap[2] ? parseInt(ap[2]) : 0;
+        const period = ap[3];
+        if (period === "AM" && h === 12) h = 0;
+        if (period === "PM" && h !== 12) h += 12;
+        return h + m / 60;
+      }
+      // "09:00" / "14:30" / "09:00:00"
+      const hm = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+      if (hm) return parseInt(hm[1]) + parseInt(hm[2]) / 60;
+      // plain integer "9" / "14"
+      const plain = s.match(/^(\d{1,2})$/);
+      if (plain) { const n = parseInt(plain[1]); if (n >= 0 && n <= 24) return n; }
+      return null;
+    }
+
+    /* ── Build rooms array from flat row data ── */
+    function rowsToRooms(rows) {
+      const map = {};
+      for (const row of rows) {
+        // Normalise keys: strip BOM, trim whitespace, lowercase → value lookup
+        const norm = {};
+        for (const [k, v] of Object.entries(row)) {
+          const cleanKey = k.replace(/^\ufeff/, "").trim().toLowerCase();
+          norm[cleanKey] = v;
+        }
+        const get = (candidates) => {
+          for (const [nk, v] of Object.entries(norm)) {
+            if (candidates.some(c => nk.includes(c))) return v;
+          }
+          return null;
+        };
+        const name  = get(["room"]);
+        const start = parseTime(get(["start"]));
+        const end   = parseTime(get(["end"]));
+        if (!name || start === null || end === null) continue;
+        const roomName = String(name).replace(/^\ufeff/, "").trim();
+        if (!map[roomName]) map[roomName] = { name: roomName, bookings: [] };
+        if (end > start) map[roomName].bookings.push({ start, end });
+      }
+      return Object.values(map);
+    }
+
+    /* ── Update room dropdown from current rooms ── */
+    function updateRoomSelect() {
+      const sel = document.getElementById("roomSelect");
+      sel.innerHTML = `<option value="all">All Rooms</option>` +
+        rooms.map(r => `<option value="${r.name}">${r.name}</option>`).join("");
+    }
+
+    /* ── File upload handler ── */
+    function handleFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const status = document.getElementById("upload-status");
+      const zone   = document.getElementById("uploadZone");
+      const reader = new FileReader();
+
+      reader.onload = function(ev) {
+        try {
+          const data = new Uint8Array(ev.target.result);
+          const wb   = XLSX.read(data, { type: "array", cellDates: false });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
+
+          if (!rows.length) throw new Error("No data rows found in file.");
+
+          const parsed = rowsToRooms(rows);
+          if (!parsed.length) throw new Error("Could not find Room, Start Time, and End Time columns.");
+
+          rooms = parsed;
+          updateRoomSelect();
+          renderSchedule();
+
+          // Reset analysis panel to prompt
+          document.getElementById("results").innerHTML = `
+            <div class="no-schedule-state">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+                <path d="M12 16V8M12 8l-3 3M12 8l3 3" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <p class="no-schedule-title" style="color:#10b981">Schedule data imported — AI engine ready</p>
+              <p class="no-schedule-sub">Select a room filter and click <strong>Run Analysis</strong> to generate AI-powered availability recommendations.</p>
+            </div>`;
+
+          // Switch zone to loaded state
+          zone.classList.remove("dragover");
+          zone.classList.add("loaded");
+          document.getElementById("upzIdle").style.display   = "none";
+          const loadedEl = document.getElementById("upzLoaded");
+          loadedEl.style.display = "flex";
+          document.getElementById("upzFileName").textContent = file.name;
+          document.getElementById("upzFileMeta").textContent =
+            `${rows.length} row${rows.length !== 1 ? "s" : ""} · ${parsed.length} room${parsed.length !== 1 ? "s" : ""} found`;
+
+          status.innerHTML = "";   // status bar cleared — info lives in the zone now
+        } catch (err) {
+          // On error: revert to idle state
+          zone.classList.remove("loaded");
+          document.getElementById("upzIdle").style.display   = "flex";
+          document.getElementById("upzLoaded").style.display = "none";
+          status.innerHTML = `
+            <div class="feedback-panel err">
+              <div class="feedback-icon err">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="#f87171" stroke-width="2"/>
+                  <path d="M15 9l-6 6M9 9l6 6" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <div class="feedback-body">
+                <p class="feedback-title err">File could not be processed</p>
+                <p class="feedback-sub">${err.message}</p>
+                <p class="feedback-hint">Ensure your file includes columns named <strong>Room</strong>, <strong>Start Time</strong>, and <strong>End Time</strong>. Supported formats: .xlsx and .csv</p>
+              </div>
+            </div>`;
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    /* ── Drag-and-drop on upload zone ── */
+    document.addEventListener("DOMContentLoaded", () => {
+      const zone = document.getElementById("uploadZone");
+      if (!zone) return;
+      zone.addEventListener("dragover",  e => { e.preventDefault(); zone.classList.add("dragover"); });
+      zone.addEventListener("dragleave", () => zone.classList.remove("dragover"));
+      zone.addEventListener("drop", e => {
+        e.preventDefault();
+        zone.classList.remove("dragover");
+        const file = e.dataTransfer.files[0];
+        if (file) {
+          document.getElementById("scheduleFile").files = e.dataTransfer.files;
+          handleFileUpload({ target: { files: e.dataTransfer.files } });
+        }
+      });
+    });
+
+    /* ── Format decimal hours → "9:30 AM" ── */
+    function toLabel(h) {
+      const totalMins = Math.round(h * 60);
+      const hrs  = Math.floor(totalMins / 60) % 24;
+      const mins = totalMins % 60;
+      const period = hrs < 12 ? "AM" : "PM";
+      const h12  = hrs === 0 ? 12 : (hrs > 12 ? hrs - 12 : hrs);
+      return `${h12}:${String(mins).padStart(2, "0")} ${period}`;
+    }
+
+    /* ── Format decimal hours as a human duration "1 hr 30 min" ── */
+    function durLabel(d) {
+      const totalMins = Math.round(d * 60);
+      const h = Math.floor(totalMins / 60);
+      const m = totalMins % 60;
+      if (m === 0) return `${h} hr${h !== 1 ? "s" : ""}`;
+      if (h === 0) return `${m} min${m !== 1 ? "s" : ""}`;
+      return `${h} hr${h !== 1 ? "s" : ""} ${m} min`;
+    }
+
+    function openSlotsFor(bookings) {
+      const sorted = [...bookings].sort((a, b) => a.start - b.start);
+      const gaps = [];
+      let cursor = OPEN_START;
+      for (const b of sorted) {
+        if (b.start > cursor) gaps.push({ start: cursor, end: b.start });
+        cursor = Math.max(cursor, b.end);
+      }
+      if (cursor < OPEN_END) gaps.push({ start: cursor, end: OPEN_END });
+      return gaps.map(g => ({ start: g.start, end: g.end, duration: g.end - g.start }));
+    }
+
+    function renderSchedule() {
+      const el = document.getElementById("schedule-view");
+
+      if (!rooms.length) {
+        el.innerHTML = `
+          <div class="no-schedule-state">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+              <path d="M12 16v-4M12 8h.01" stroke="#334155" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="12" r="9" stroke="#334155" stroke-width="2"/>
+            </svg>
+            <p class="no-schedule-title">No schedule data loaded</p>
+            <p class="no-schedule-sub">Import a schedule file above to populate the timeline. The AI engine will automatically parse bookings and compute availability windows.<br>Required columns: <strong>Room</strong>, <strong>Start Time</strong>, <strong>End Time</strong></p>
+          </div>`;
+        return;
+      }
+
+      const total = OPEN_END - OPEN_START;
+      function pct(h)    { return ((h - OPEN_START) / total * 100).toFixed(2) + "%"; }
+      function wpct(s,e)  { return ((e - s) / total * 100).toFixed(2) + "%"; }
+
+      const roomRowsHTML = rooms.map(room => {
+        const blocksHTML = room.bookings.map(b => `
+          <div class="room-booked-block"
+               style="left:${pct(b.start)};width:${wpct(b.start,b.end)}">
+            ${b.end - b.start >= 1 ? room.name.split(" ")[0] : ""}
+          </div>
+        `).join("");
+        return `
+          <div class="room-row">
+            <span class="room-row-name">${room.name}</span>
+            <div class="room-timeline">${blocksHTML}</div>
+          </div>
+        `;
+      }).join("");
+
+      const scheduleRowsHTML = rooms.map(room =>
+        room.bookings.map(b => `
+          <div class="sched-row">
+            <span class="sched-name">${room.name}</span>
+            <span class="sched-time">${toLabel(b.start)} – ${toLabel(b.end)}</span>
+            <span class="booked-badge">Booked</span>
+          </div>
+        `).join("")
+      ).join("");
+
+      document.getElementById("schedule-view").innerHTML = `
+        <div class="schedule-section">
+          <div class="schedule-header">
+            <h2>Today's Schedule</h2>
+            <span class="hours-pill">Open ${toLabel(OPEN_START)} – ${toLabel(OPEN_END)}</span>
+          </div>
+          <div class="schedule-legend" style="margin-bottom:10px;">
+            <div class="legend-item"><div class="legend-dot booked"></div> Booked</div>
+            <div class="legend-item"><div class="legend-dot free"></div> Available</div>
+          </div>
+          <div class="room-rows">${roomRowsHTML}</div>
+          <div class="schedule-rows">${scheduleRowsHTML}</div>
+        </div>
+      `;
+    }
+
+    renderSchedule();
+
+    function findSlots() {
+      const btn        = document.getElementById("findBtn");
+      const results    = document.getElementById("results");
+
+      if (!rooms.length) {
+        results.innerHTML = `
+          <div class="feedback-panel warn">
+            <div class="feedback-icon warn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="feedback-body">
+              <p class="feedback-title warn">Please upload a schedule file</p>
+              <p class="feedback-sub">No schedule data has been imported yet. Use the <strong style="color:#94a3b8">Import schedule data</strong> section in the Schedule Overview panel to upload your .xlsx or .csv file before running an analysis.</p>
+            </div>
+          </div>`;
+        return;
+      }
+
+      const selected   = document.getElementById("roomSelect").value;
+      const roomsToShow = selected === "all"
+        ? rooms
+        : rooms.filter(r => r.name === selected);
+
+      btn.disabled = true;
+      btn.innerHTML = `<div class="btn-spinner"></div> Analyzing…`;
+      results.innerHTML = `
+        <div class="analyzing">
+          <div class="analyzing-dots">
+            <div class="analyzing-dot"></div>
+            <div class="analyzing-dot"></div>
+            <div class="analyzing-dot"></div>
+          </div>
+          <p class="analyzing-label">AI engine processing schedule data…</p>
+          <p class="analyzing-sub">Evaluating booking patterns and computing optimal availability windows</p>
+        </div>
+      `;
+
+      setTimeout(() => {
+        const roomResultsHTML = roomsToShow.map((room, ri) => {
+          const slots = openSlotsFor(room.bookings);
+          const booked = room.bookings.map(b => `${toLabel(b.start)} – ${toLabel(b.end)}`).join(", ");
+
+          if (!slots.length) {
+            return `
+              <div class="room-result" style="animation-delay:${ri * 0.08}s">
+                <div class="room-result-header">
+                  <div class="room-result-top">
+                    <span class="room-result-name">${room.name}</span>
+                    <span class="slot-count-pill" style="background:rgba(239,68,68,0.12);color:#f87171;border-color:rgba(239,68,68,0.2)">Fully booked</span>
+                  </div>
+                  <div class="room-result-sub">Booked: ${booked}</div>
+                </div>
+                <div class="no-slots-card">
+                  <div class="no-slots-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="4" width="18" height="18" rx="2" stroke="#f87171" stroke-width="2"/>
+                      <path d="M16 2v4M8 2v4M3 10h18M10 14l4 4M14 14l-4 4" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="no-slots-title">No available time slots found</p>
+                    <p class="no-slots-sub">All facility hours for this room are fully booked during operating hours (${toLabel(OPEN_START)} – ${toLabel(OPEN_END)}).</p>
+                  </div>
+                </div>
+              </div>`;
+          }
+
+          const bestIdx = slots.reduce((bi, s, i, a) => s.duration > a[bi].duration ? i : bi, 0);
+          const best    = slots[bestIdx];
+          const rest    = slots.filter((_, i) => i !== bestIdx);
+
+          const recHTML = `
+            <div class="rec-wrap">
+              <div class="rec-card">
+                <div class="rec-label">
+                  <span class="rec-label-icon">&#10024;</span> AI Recommended Slot
+                </div>
+                <div class="rec-time">${toLabel(best.start)} – ${toLabel(best.end)}</div>
+                <div class="rec-meta">Longest available window &middot; ${durLabel(best.duration)} free</div>
+                <span class="rec-badge">Best Pick</span>
+              </div>
+              <p class="rec-explanation">Selected by the AI engine as the optimal window based on maximum uninterrupted availability and facility utilization efficiency.</p>
+            </div>`;
+
+          const restHTML = rest.length
+            ? `<p class="other-heading">Other available slots</p>
+               <div class="room-slots">
+                 ${rest.map(s => `
+                   <div class="room-slot">
+                     <div class="slot-dot"></div>
+                     <div class="slot-body">
+                       <div class="slot-time">${toLabel(s.start)} – ${toLabel(s.end)}</div>
+                       <div class="slot-dur">${durLabel(s.duration)} free</div>
+                     </div>
+                     <span class="slot-badge">Open</span>
+                   </div>`).join("")}
+               </div>`
+            : "";
+
+          return `
+            <div class="room-result" style="animation-delay:${ri * 0.08}s">
+              <div class="room-result-header">
+                <div class="room-result-top">
+                  <span class="room-result-name">${room.name}</span>
+                  <span class="slot-count-pill">${slots.length} slot${slots.length !== 1 ? "s" : ""} open</span>
+                </div>
+                <div class="room-result-sub">Booked: ${booked}</div>
+              </div>
+              ${recHTML}
+              ${restHTML}
+              <div style="height:6px"></div>
+            </div>`;
+        }).join("");
+
+        const allBooked = roomsToShow.every(r => openSlotsFor(r.bookings).length === 0);
+
+        if (allBooked) {
+          results.innerHTML = `
+            <div class="all-booked-state">
+              <div class="all-booked-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <rect x="3" y="4" width="18" height="18" rx="2" stroke="#f87171" stroke-width="2"/>
+                  <path d="M16 2v4M8 2v4M3 10h18M10 14l4 4M14 14l-4 4" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <p class="all-booked-title">No available time slots found</p>
+              <p class="all-booked-sub">All rooms in the selected filter are fully booked during facility operating hours (${toLabel(OPEN_START)} – ${toLabel(OPEN_END)}). Consider reviewing bookings or adjusting the room filter.</p>
+            </div>`;
+        } else {
+          results.innerHTML = `
+            <p class="results-section-label">${selected === "all" ? "Available slots by room" : `Available slots — ${selected}`}</p>
+            ${roomResultsHTML}
+          `;
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = `
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          Run Analysis`;
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
