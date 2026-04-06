@@ -26,16 +26,16 @@ This application uses AI-assisted logic to analyze scheduling data and identify 
 * Built using Replit AI
 * AI-assisted development using ChatGPT
 
-## How to Run
+## How to Use
 
-1. Open the project in a browser
-2. Upload a CSV file with:
-
-   * Room
-   * Start Time
-   * End Time
+1. Open index.html in a web browser
+2. Upload a CSV file with columns:
+   - Room
+   - Start Time
+   - End Time
 3. Click "Find Open Slots"
-
+4. View AI-recommended time slots
+   
 ## AI Usage
 
 This project was developed using AI-assisted tools including Replit AI and ChatGPT for:
@@ -47,7 +47,7 @@ This project was developed using AI-assisted tools including Replit AI and ChatG
 
 ## Team Members
 
-* Add your team members here
+* Rahat Akbari, Hajra Anwar, Mohamad Hemadi, Olutito Mebude, and Nolan Sun 
 
 ## License
 
