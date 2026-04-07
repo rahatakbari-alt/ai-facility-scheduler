@@ -1548,6 +1548,7 @@
     /* ── Build rooms array from flat row data ── */
     function rowsToRooms(rows) {
       const map = {};
+      let invalidCount = 0;
       for (const row of rows) {
         // Normalise keys: strip BOM, trim whitespace, lowercase → value lookup
         const norm = {};
@@ -1564,12 +1565,26 @@
         const name  = get(["room"]);
         const start = parseTime(get(["start"]));
         const end   = parseTime(get(["end"]));
-        if (!name || start === null || end === null) continue;
+
+        // Blank rows (no room name) are silently skipped
+        if (!name) continue;
+
+        // Time validation: must parse, be within operating hours, and start < end
+        if (
+          start === null || end === null ||
+          start < OPEN_START || start > OPEN_END ||
+          end   < OPEN_START || end   > OPEN_END ||
+          start >= end
+        ) {
+          invalidCount++;
+          continue;
+        }
+
         const roomName = String(name).replace(/^\ufeff/, "").trim();
         if (!map[roomName]) map[roomName] = { name: roomName, bookings: [] };
-        if (end > start) map[roomName].bookings.push({ start, end });
+        map[roomName].bookings.push({ start, end });
       }
-      return Object.values(map);
+      return { rooms: Object.values(map), invalidCount };
     }
 
     /* ── Update room dropdown from current rooms ── */
@@ -1660,17 +1675,31 @@
             { hint: "Ensure your file contains at least one row of booking data beneath the header row, and that the sheet is not blank." }
           );
 
-          const parsed = rowsToRooms(rows);
-          if (!parsed.length) {
-            const rawKeys = Object.keys(rows[0] || {})
-              .map(k => k.replace(/^\ufeff/, "").trim())
-              .filter(Boolean);
-            const found = rawKeys.length
-              ? `Columns detected in your file: <strong>${rawKeys.slice(0, 8).join(", ")}${rawKeys.length > 8 ? "…" : ""}</strong>.`
-              : "No column headers were detected.";
+          // ── Column presence validation ──────────────────────────────────
+          const headerKeys = Object.keys(rows[0] || {})
+            .map(k => k.replace(/^\ufeff/, "").trim().toLowerCase());
+          const hasRoom  = headerKeys.some(k => k.includes("room"));
+          const hasStart = headerKeys.some(k => k.includes("start"));
+          const hasEnd   = headerKeys.some(k => k.includes("end"));
+
+          if (!hasRoom || !hasStart || !hasEnd) {
+            const missing = [
+              !hasRoom  && "Room",
+              !hasStart && "Start Time",
+              !hasEnd   && "End Time"
+            ].filter(Boolean);
             throw Object.assign(
-              new Error("Required columns not found."),
-              { hint: `${found} Rename or add columns named exactly <strong>Room</strong>, <strong>Start Time</strong>, and <strong>End Time</strong>.` }
+              new Error("Invalid file format. Please upload a file with Room, Start Time, and End Time columns."),
+              { hint: `Missing column${missing.length > 1 ? "s" : ""}: <strong>${missing.join(", ")}</strong>. Detected headers: ${headerKeys.length ? "<strong>" + headerKeys.slice(0, 8).join(", ") + (headerKeys.length > 8 ? "…" : "") + "</strong>" : "none"}.` }
+            );
+          }
+          // ────────────────────────────────────────────────────────────────
+
+          const { rooms: parsed, invalidCount } = rowsToRooms(rows);
+          if (!parsed.length) {
+            throw Object.assign(
+              new Error("No valid bookings could be read from the file."),
+              { hint: "The file has the correct columns but no rows could be parsed. Check that Start Time and End Time values are valid times (e.g. 9:00 AM, 14:30), are between 7:00 and 23:00, and that Start Time is before End Time." }
             );
           }
 
@@ -1699,13 +1728,36 @@
           document.getElementById("upzFileMeta").textContent =
             `${rows.length} row${rows.length !== 1 ? "s" : ""} · ${parsed.length} room${parsed.length !== 1 ? "s" : ""} found`;
 
-          status.innerHTML = "";   // status bar cleared — info lives in the zone now
+          // Show a warning if any rows had invalid time data, otherwise clear
+          if (invalidCount > 0) {
+            status.innerHTML = `
+              <div class="feedback-panel warn">
+                <div class="feedback-icon warn">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 9v4M12 17h.01" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="feedback-body">
+                  <p class="feedback-title warn">Invalid time data detected</p>
+                  <p class="feedback-sub">Invalid time data detected. Please check your schedule file.</p>
+                  <p class="feedback-hint">${invalidCount} row${invalidCount !== 1 ? "s" : ""} skipped — times must be numbers between 7:00 and 23:00, with Start Time before End Time.</p>
+                </div>
+              </div>`;
+          } else {
+            status.innerHTML = "";
+          }
         } catch (err) {
           // On error: revert to idle state
           zone.classList.remove("loaded");
           document.getElementById("upzIdle").style.display   = "flex";
           document.getElementById("upzLoaded").style.display = "none";
-          const hintHTML = err.hint
+          // Custom validation errors carry err.hint; native parse/read errors do not
+          const isCustom = Boolean(err.hint);
+          const subText  = isCustom
+            ? err.message
+            : "Error reading file. Please upload a valid CSV file.";
+          const hintHTML = isCustom
             ? `<p class="feedback-hint">${err.hint}</p>`
             : `<p class="feedback-hint">Supported formats: .xlsx and .csv. Required columns: <strong>Room</strong>, <strong>Start Time</strong>, <strong>End Time</strong>.</p>`;
           status.innerHTML = `
@@ -1718,12 +1770,34 @@
               </div>
               <div class="feedback-body">
                 <p class="feedback-title err">File could not be processed</p>
-                <p class="feedback-sub">${err.message}</p>
+                <p class="feedback-sub">${subText}</p>
                 ${hintHTML}
               </div>
             </div>`;
         }
       };
+
+      // FileReader OS-level failure (permissions, corrupt binary at read time, etc.)
+      reader.onerror = function() {
+        zone.classList.remove("loaded");
+        document.getElementById("upzIdle").style.display   = "flex";
+        document.getElementById("upzLoaded").style.display = "none";
+        status.innerHTML = `
+          <div class="feedback-panel err">
+            <div class="feedback-icon err">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="9" stroke="#f87171" stroke-width="2"/>
+                <path d="M15 9l-6 6M9 9l6 6" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="feedback-body">
+              <p class="feedback-title err">File could not be processed</p>
+              <p class="feedback-sub">Error reading file. Please upload a valid CSV file.</p>
+              <p class="feedback-hint">Supported formats: .xlsx and .csv. Required columns: <strong>Room</strong>, <strong>Start Time</strong>, <strong>End Time</strong>.</p>
+            </div>
+          </div>`;
+      };
+
       reader.readAsArrayBuffer(file);
     }
 
@@ -1764,11 +1838,29 @@
       return `${h} hr${h !== 1 ? "s" : ""} ${m} min`;
     }
 
-    function openSlotsFor(bookings) {
+    /* ── Merge overlapping/adjacent bookings into non-overlapping spans ── */
+    function mergeBookings(bookings) {
+      if (!bookings.length) return [];
       const sorted = [...bookings].sort((a, b) => a.start - b.start);
+      const merged = [{ start: sorted[0].start, end: sorted[0].end }];
+      for (let i = 1; i < sorted.length; i++) {
+        const last = merged[merged.length - 1];
+        if (sorted[i].start <= last.end) {
+          // Overlapping or touching — extend the current span
+          last.end = Math.max(last.end, sorted[i].end);
+        } else {
+          merged.push({ start: sorted[i].start, end: sorted[i].end });
+        }
+      }
+      return merged;
+    }
+
+    /* ── Find open time slots for a set of bookings ── */
+    function openSlotsFor(bookings) {
+      const merged = mergeBookings(bookings);   // handles overlaps before gap-finding
       const gaps = [];
       let cursor = OPEN_START;
-      for (const b of sorted) {
+      for (const b of merged) {
         if (b.start > cursor) gaps.push({ start: cursor, end: b.start });
         cursor = Math.max(cursor, b.end);
       }
@@ -1797,7 +1889,7 @@
       function wpct(s,e)  { return ((e - s) / total * 100).toFixed(2) + "%"; }
 
       const roomRowsHTML = rooms.map(room => {
-        const blocksHTML = room.bookings.map(b => `
+        const blocksHTML = mergeBookings(room.bookings).map(b => `
           <div class="room-booked-block"
                style="left:${pct(b.start)};width:${wpct(b.start,b.end)}">
             ${b.end - b.start >= 1 ? room.name.split(" ")[0] : ""}
@@ -1812,7 +1904,7 @@
       }).join("");
 
       const scheduleRowsHTML = rooms.map(room =>
-        room.bookings.map(b => `
+        mergeBookings(room.bookings).map(b => `
           <div class="sched-row">
             <span class="sched-name">${room.name}</span>
             <span class="sched-time">${toLabel(b.start)} – ${toLabel(b.end)}</span>
@@ -1853,7 +1945,8 @@
             </div>
             <div class="feedback-body">
               <p class="feedback-title warn">No schedule file uploaded</p>
-              <p class="feedback-sub">Import a schedule file before running an analysis. Use the <strong style="color:#6366f1">Import schedule data</strong> area at the top of the page to upload an .xlsx or .csv file with columns named <strong>Room</strong>, <strong>Start Time</strong>, and <strong>End Time</strong>.</p>
+              <p class="feedback-sub">Please upload a schedule file.</p>
+              <p class="feedback-hint">Use the <strong>Import schedule data</strong> area above to upload an .xlsx or .csv file with columns named <strong>Room</strong>, <strong>Start Time</strong>, and <strong>End Time</strong>.</p>
             </div>
           </div>`;
         return;
@@ -1883,9 +1976,10 @@
 
       setTimeout(() => {
         const roomResultsHTML = roomsToShow.map((room, ri) => {
+          const merged = mergeBookings(room.bookings);
           const slots  = openSlotsFor(room.bookings);
-          const booked = room.bookings.length
-            ? room.bookings.map(b => `${toLabel(b.start)} – ${toLabel(b.end)}`).join(", ")
+          const booked = merged.length
+            ? merged.map(b => `${toLabel(b.start)} – ${toLabel(b.end)}`).join(", ")
             : "None";
 
           // Fully booked — no open windows at all
