@@ -436,7 +436,7 @@
     }
 
     .room-result-header {
-      padding: 20px 22px 16px;
+      padding: 20px 20px 16px;
       border-bottom: 1px solid #f0f3f8;
       background: linear-gradient(90deg, rgba(99,102,241,0.04) 0%, transparent 100%);
     }
@@ -467,7 +467,7 @@
     }
 
     .room-result-sub {
-      font-size: 0.76rem;
+      font-size: 0.75rem;
       color: #64748b;
       font-weight: 500;
     }
@@ -479,7 +479,7 @@
       gap: 14px;
       padding: 16px 18px;
       border-radius: 12px;
-      margin: 16px 18px 8px;
+      margin: 12px 0 8px;
     }
 
     .feedback-panel.warn {
@@ -526,20 +526,28 @@
     .feedback-hint {
       font-size: 0.72rem;
       color: #475569;
-      margin: 4px 0 0;
-      padding: 6px 10px;
-      background: rgba(255,255,255,0.03);
-      border-left: 2px solid rgba(239,68,68,0.3);
-      border-radius: 2px;
-      line-height: 1.5;
+      margin: 6px 0 0;
+      padding: 8px 12px;
+      background: rgba(15,23,42,0.04);
+      border-left: 2px solid rgba(239,68,68,0.35);
+      border-radius: 0 4px 4px 0;
+      line-height: 1.55;
     }
+
+    .feedback-panel.info {
+      background: rgba(99,102,241,0.06);
+      border: 1px solid rgba(99,102,241,0.18);
+    }
+
+    .feedback-icon.info { background: rgba(99,102,241,0.12); }
+    .feedback-title.info { color: #6366f1; }
 
     /* ── No available slots card ── */
     .no-slots-card {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin: 10px 18px 18px;
+      margin: 10px 20px 18px;
       padding: 14px 16px;
       background: rgba(239,68,68,0.05);
       border: 1px solid rgba(239,68,68,0.12);
@@ -614,7 +622,7 @@
     }
 
     /* ── AI Recommendation card ── */
-    .rec-wrap { padding: 18px 18px 6px; }
+    .rec-wrap { padding: 18px 20px 8px; }
 
     .rec-card {
       background: linear-gradient(135deg, #1e1b4b 0%, #312e81 40%, #4338ca 100%);
@@ -641,10 +649,10 @@
     }
 
     .rec-label {
-      font-size: 0.6rem;
+      font-size: 0.65rem;
       font-weight: 800;
       text-transform: uppercase;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.14em;
       color: #a5b4fc;
       margin-bottom: 12px;
       display: flex;
@@ -685,25 +693,24 @@
     }
 
     .rec-explanation {
-      font-size: 0.74rem;
-      color: #334155;
+      font-size: 0.75rem;
+      color: #475569;
       margin: 10px 0 0;
       line-height: 1.6;
-      font-style: italic;
     }
 
     /* ── Other slots ── */
     .other-heading {
-      font-size: 0.62rem;
-      font-weight: 800;
+      font-size: 0.65rem;
+      font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: #1e293b;
-      padding: 16px 22px 8px;
+      letter-spacing: 0.12em;
+      color: #64748b;
+      padding: 14px 20px 8px;
     }
 
     .room-slots {
-      padding: 0 18px 18px;
+      padding: 0 20px 18px;
       display: flex;
       flex-direction: column;
       gap: 8px;
@@ -749,7 +756,7 @@
     }
 
     .slot-badge {
-      font-size: 0.66rem;
+      font-size: 0.68rem;
       font-weight: 700;
       color: #10b981;
       background: rgba(16,185,129,0.1);
@@ -757,7 +764,7 @@
       border-radius: 999px;
       padding: 3px 10px;
       white-space: nowrap;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.03em;
     }
 
     /* ── Analyzing loader ── */
@@ -803,9 +810,10 @@
     }
 
     .analyzing-sub {
-      font-size: 0.74rem;
-      color: #334155;
+      font-size: 0.75rem;
+      color: #475569;
       margin: 0;
+      line-height: 1.6;
     }
 
     /* Kept for .btn-spinner usage */
@@ -915,6 +923,54 @@
       color: #818cf8;
       text-decoration: underline;
       text-decoration-color: rgba(129,140,248,0.35);
+    }
+
+    /* ── Sample data row ── */
+    .sample-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 2px 10px;
+    }
+
+    .sample-divider {
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .sample-or {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #94a3b8;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .sample-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: transparent;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #6366f1;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.16s, border-color 0.16s, color 0.16s;
+      white-space: nowrap;
+    }
+
+    .sample-btn:hover {
+      background: rgba(99,102,241,0.07);
+      border-color: #818cf8;
+    }
+
+    .sample-btn:active {
+      background: rgba(99,102,241,0.13);
     }
 
     .upz-cols {
@@ -1101,13 +1157,13 @@
     }
 
     .engine-badge {
-      font-size: 0.6rem;
-      font-weight: 800;
+      font-size: 0.65rem;
+      font-weight: 700;
       color: #10b981;
       background: rgba(16,185,129,0.12);
       border-radius: 4px;
-      padding: 2px 6px;
-      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
     }
 
@@ -1174,7 +1230,7 @@
     .panel-divider {
       height: 1px;
       background: #f0f3f8;
-      margin: 14px 0;
+      margin: 16px 0;
     }
 
     /* Compact the empty state when nested in schedule-view (vs results panel) */
@@ -1217,6 +1273,53 @@
       align-items: center;
       gap: 8px;
       padding: 14px 22px;
+    }
+
+    /* ── Duration input ── */
+    .dur-wrap { flex: 0 0 130px; }
+
+    .dur-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .dur-input {
+      width: 100%;
+      background: #ffffff;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 38px 14px 18px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #1e293b;
+      font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      box-shadow: 0 1px 4px rgba(15,23,42,0.06);
+      -moz-appearance: textfield;
+    }
+
+    .dur-input::-webkit-outer-spin-button,
+    .dur-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .dur-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+
+    .dur-input:hover { border-color: #c4cad4; }
+
+    .dur-input::placeholder { color: #94a3b8; font-weight: 400; }
+
+    .dur-suffix {
+      position: absolute;
+      right: 13px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #94a3b8;
+      pointer-events: none;
+      letter-spacing: 0.01em;
     }
 
     /* ── Schedule section — nested inside a panel on light theme ── */
@@ -1309,6 +1412,19 @@
             <input type="file" id="scheduleFile" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event)"/>
           </label>
           <div id="upload-status"></div>
+          <div class="sample-row">
+            <span class="sample-divider"></span>
+            <span class="sample-or">or</span>
+            <button class="sample-btn" onclick="loadSampleData()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
+                <path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              Use Sample Data
+            </button>
+            <span class="sample-divider"></span>
+          </div>
         </div>
 
         <div class="panel-divider"></div>
@@ -1344,6 +1460,14 @@
                 <svg class="select-arrow" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M5 8l5 5 5-5" stroke="#475569" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
+              </div>
+            </div>
+            <div class="select-wrap dur-wrap">
+              <label class="select-label" for="durationInput">Duration</label>
+              <div class="dur-input-wrap">
+                <input type="number" id="durationInput" class="dur-input"
+                       min="0.5" max="16" step="0.5" placeholder="Any" />
+                <span class="dur-suffix">hrs</span>
               </div>
             </div>
             <button id="findBtn" onclick="findSlots()">
@@ -1455,6 +1579,67 @@
         rooms.map(r => `<option value="${r.name}">${r.name}</option>`).join("");
     }
 
+    /* ── Sample data loader ── */
+    function loadSampleData() {
+      rooms = [
+        {
+          name: "Gymnasium",
+          bookings: [
+            { start: 7,    end: 8.5  },
+            { start: 10,   end: 12   },
+            { start: 14,   end: 15.5 },
+            { start: 18,   end: 19.5 }
+          ]
+        },
+        {
+          name: "Swimming Pool",
+          bookings: [
+            { start: 8,    end: 10   },
+            { start: 11,   end: 13   },
+            { start: 17,   end: 20   }
+          ]
+        },
+        {
+          name: "Meeting Room A",
+          bookings: [
+            { start: 9,    end: 10   },
+            { start: 10.5, end: 12   },
+            { start: 13,   end: 14.5 },
+            { start: 15,   end: 16   },
+            { start: 16.5, end: 18   }
+          ]
+        },
+        {
+          name: "Conference Room",
+          bookings: [
+            { start: 9,    end: 11   },
+            { start: 14,   end: 17   }
+          ]
+        }
+      ];
+
+      updateRoomSelect();
+      renderSchedule();
+
+      document.getElementById("upload-status").innerHTML = "";
+      document.getElementById("upzIdle").style.display   = "none";
+      document.getElementById("upzLoaded").style.display = "flex";
+      document.getElementById("upzFileName").textContent = "Sample Schedule";
+      document.getElementById("upzFileMeta").textContent =
+        "4 rooms · 14 bookings (demo data)";
+      document.getElementById("uploadZone").classList.add("loaded");
+
+      document.getElementById("results").innerHTML = `
+        <div class="no-schedule-state">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+            <path d="M12 16V8M12 8l-3 3M12 8l3 3" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <p class="no-schedule-title" style="color:#10b981">Sample data loaded — AI engine ready</p>
+          <p class="no-schedule-sub">4 rooms and 14 bookings have been pre-loaded. Select a room filter and click <strong>Run Analysis</strong> to see the scheduler in action.</p>
+        </div>`;
+    }
+
     /* ── File upload handler ── */
     function handleFileUpload(e) {
       const file = e.target.files[0];
@@ -1470,10 +1655,24 @@
           const ws   = wb.Sheets[wb.SheetNames[0]];
           const rows = XLSX.utils.sheet_to_json(ws, { defval: "" });
 
-          if (!rows.length) throw new Error("No data rows found in file.");
+          if (!rows.length) throw Object.assign(
+            new Error("The file appears to be empty — no data rows were found."),
+            { hint: "Ensure your file contains at least one row of booking data beneath the header row, and that the sheet is not blank." }
+          );
 
           const parsed = rowsToRooms(rows);
-          if (!parsed.length) throw new Error("Could not find Room, Start Time, and End Time columns.");
+          if (!parsed.length) {
+            const rawKeys = Object.keys(rows[0] || {})
+              .map(k => k.replace(/^\ufeff/, "").trim())
+              .filter(Boolean);
+            const found = rawKeys.length
+              ? `Columns detected in your file: <strong>${rawKeys.slice(0, 8).join(", ")}${rawKeys.length > 8 ? "…" : ""}</strong>.`
+              : "No column headers were detected.";
+            throw Object.assign(
+              new Error("Required columns not found."),
+              { hint: `${found} Rename or add columns named exactly <strong>Room</strong>, <strong>Start Time</strong>, and <strong>End Time</strong>.` }
+            );
+          }
 
           rooms = parsed;
           updateRoomSelect();
@@ -1506,6 +1705,9 @@
           zone.classList.remove("loaded");
           document.getElementById("upzIdle").style.display   = "flex";
           document.getElementById("upzLoaded").style.display = "none";
+          const hintHTML = err.hint
+            ? `<p class="feedback-hint">${err.hint}</p>`
+            : `<p class="feedback-hint">Supported formats: .xlsx and .csv. Required columns: <strong>Room</strong>, <strong>Start Time</strong>, <strong>End Time</strong>.</p>`;
           status.innerHTML = `
             <div class="feedback-panel err">
               <div class="feedback-icon err">
@@ -1517,7 +1719,7 @@
               <div class="feedback-body">
                 <p class="feedback-title err">File could not be processed</p>
                 <p class="feedback-sub">${err.message}</p>
-                <p class="feedback-hint">Ensure your file includes columns named <strong>Room</strong>, <strong>Start Time</strong>, and <strong>End Time</strong>. Supported formats: .xlsx and .csv</p>
+                ${hintHTML}
               </div>
             </div>`;
         }
@@ -1650,8 +1852,8 @@
               </svg>
             </div>
             <div class="feedback-body">
-              <p class="feedback-title warn">Please upload a schedule file</p>
-              <p class="feedback-sub">No schedule data has been imported yet. Use the <strong style="color:#94a3b8">Import schedule data</strong> section in the Schedule Overview panel to upload your .xlsx or .csv file before running an analysis.</p>
+              <p class="feedback-title warn">No schedule file uploaded</p>
+              <p class="feedback-sub">Import a schedule file before running an analysis. Use the <strong style="color:#6366f1">Import schedule data</strong> area at the top of the page to upload an .xlsx or .csv file with columns named <strong>Room</strong>, <strong>Start Time</strong>, and <strong>End Time</strong>.</p>
             </div>
           </div>`;
         return;
@@ -1661,6 +1863,9 @@
       const roomsToShow = selected === "all"
         ? rooms
         : rooms.filter(r => r.name === selected);
+
+      const rawDur = parseFloat(document.getElementById("durationInput").value);
+      const requestedDur = (!isNaN(rawDur) && rawDur > 0) ? rawDur : null;
 
       btn.disabled = true;
       btn.innerHTML = `<div class="btn-spinner"></div> Analyzing…`;
@@ -1678,9 +1883,12 @@
 
       setTimeout(() => {
         const roomResultsHTML = roomsToShow.map((room, ri) => {
-          const slots = openSlotsFor(room.bookings);
-          const booked = room.bookings.map(b => `${toLabel(b.start)} – ${toLabel(b.end)}`).join(", ");
+          const slots  = openSlotsFor(room.bookings);
+          const booked = room.bookings.length
+            ? room.bookings.map(b => `${toLabel(b.start)} – ${toLabel(b.end)}`).join(", ")
+            : "None";
 
+          // Fully booked — no open windows at all
           if (!slots.length) {
             return `
               <div class="room-result" style="animation-delay:${ri * 0.08}s">
@@ -1706,9 +1914,49 @@
               </div>`;
           }
 
-          const bestIdx = slots.reduce((bi, s, i, a) => s.duration > a[bi].duration ? i : bi, 0);
-          const best    = slots[bestIdx];
-          const rest    = slots.filter((_, i) => i !== bestIdx);
+          // Filter by requested duration if provided
+          const fittingSlots = requestedDur
+            ? slots.filter(s => s.duration >= requestedDur)
+            : slots;
+
+          // Open windows exist but none are long enough for the requested duration
+          if (requestedDur && !fittingSlots.length) {
+            const windowList = slots.map(s => durLabel(s.duration)).join(", ");
+            return `
+              <div class="room-result" style="animation-delay:${ri * 0.08}s">
+                <div class="room-result-header">
+                  <div class="room-result-top">
+                    <span class="room-result-name">${room.name}</span>
+                    <span class="slot-count-pill" style="background:rgba(245,158,11,0.10);color:#f59e0b;border-color:rgba(245,158,11,0.22)">${slots.length} slot${slots.length !== 1 ? "s" : ""} open</span>
+                  </div>
+                  <div class="room-result-sub">Booked: ${booked}</div>
+                </div>
+                <div class="no-slots-card">
+                  <div class="no-slots-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="no-slots-title">No suitable slot available for the selected duration.</p>
+                    <p class="no-slots-sub">Available windows (${windowList}) are shorter than the requested ${durLabel(requestedDur)}.</p>
+                  </div>
+                </div>
+              </div>`;
+          }
+
+          // Pick best slot: earliest fitting when duration filter active, longest otherwise
+          const best = requestedDur
+            ? fittingSlots.reduce((a, b) => a.start < b.start ? a : b)
+            : fittingSlots.reduce((a, b) => a.duration > b.duration ? a : b);
+          const rest = fittingSlots.filter(s => s !== best);
+
+          const recMeta = requestedDur
+            ? `Earliest slot fitting ${durLabel(requestedDur)} &middot; ${durLabel(best.duration)} window`
+            : `Longest available window &middot; ${durLabel(best.duration)} free`;
+          const recExplanation = requestedDur
+            ? `Earliest available window that can accommodate the requested ${durLabel(requestedDur)} booking. ${rest.length ? "Other fitting windows are listed below." : ""}`
+            : `Selected by the AI engine as the optimal window based on maximum uninterrupted availability and facility utilization efficiency.`;
 
           const recHTML = `
             <div class="rec-wrap">
@@ -1717,14 +1965,14 @@
                   <span class="rec-label-icon">&#10024;</span> AI Recommended Slot
                 </div>
                 <div class="rec-time">${toLabel(best.start)} – ${toLabel(best.end)}</div>
-                <div class="rec-meta">Longest available window &middot; ${durLabel(best.duration)} free</div>
+                <div class="rec-meta">${recMeta}</div>
                 <span class="rec-badge">Best Pick</span>
               </div>
-              <p class="rec-explanation">Selected by the AI engine as the optimal window based on maximum uninterrupted availability and facility utilization efficiency.</p>
+              <p class="rec-explanation">${recExplanation}</p>
             </div>`;
 
           const restHTML = rest.length
-            ? `<p class="other-heading">Other available slots</p>
+            ? `<p class="other-heading">Other ${requestedDur ? "fitting" : "available"} slots</p>
                <div class="room-slots">
                  ${rest.map(s => `
                    <div class="room-slot">
@@ -1738,12 +1986,16 @@
                </div>`
             : "";
 
+          const pillLabel = requestedDur
+            ? `${fittingSlots.length} fit${fittingSlots.length !== 1 ? "s" : ""} ${durLabel(requestedDur)}`
+            : `${slots.length} slot${slots.length !== 1 ? "s" : ""} open`;
+
           return `
             <div class="room-result" style="animation-delay:${ri * 0.08}s">
               <div class="room-result-header">
                 <div class="room-result-top">
                   <span class="room-result-name">${room.name}</span>
-                  <span class="slot-count-pill">${slots.length} slot${slots.length !== 1 ? "s" : ""} open</span>
+                  <span class="slot-count-pill">${pillLabel}</span>
                 </div>
                 <div class="room-result-sub">Booked: ${booked}</div>
               </div>
@@ -1753,9 +2005,13 @@
             </div>`;
         }).join("");
 
-        const allBooked = roomsToShow.every(r => openSlotsFor(r.bookings).length === 0);
+        const allTrulyBooked    = roomsToShow.every(r => openSlotsFor(r.bookings).length === 0);
+        const allDurationNoFit  = requestedDur && !allTrulyBooked && roomsToShow.every(r => {
+          const s = openSlotsFor(r.bookings);
+          return s.length > 0 && s.filter(x => x.duration >= requestedDur).length === 0;
+        });
 
-        if (allBooked) {
+        if (allTrulyBooked) {
           results.innerHTML = `
             <div class="all-booked-state">
               <div class="all-booked-icon">
@@ -1765,11 +2021,25 @@
                 </svg>
               </div>
               <p class="all-booked-title">No available time slots found</p>
-              <p class="all-booked-sub">All rooms in the selected filter are fully booked during facility operating hours (${toLabel(OPEN_START)} – ${toLabel(OPEN_END)}). Consider reviewing bookings or adjusting the room filter.</p>
+              <p class="all-booked-sub">All rooms in the selected filter are fully booked during facility operating hours (${toLabel(OPEN_START)} – ${toLabel(OPEN_END)}). Try adjusting the room filter or reviewing existing bookings.</p>
             </div>`;
-        } else {
+        } else if (allDurationNoFit) {
           results.innerHTML = `
-            <p class="results-section-label">${selected === "all" ? "Available slots by room" : `Available slots — ${selected}`}</p>
+            <div class="all-booked-state">
+              <div class="all-booked-icon" style="background:rgba(245,158,11,0.12)">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <p class="all-booked-title" style="color:#f59e0b">No slots available for the requested duration</p>
+              <p class="all-booked-sub">None of the available time windows across ${roomsToShow.length === 1 ? "this room" : "any of the selected rooms"} are long enough to accommodate a ${durLabel(requestedDur)} booking. Try reducing the duration or broadening the room filter.</p>
+            </div>
+            <p class="results-section-label" style="margin-top:0">Available windows — ${durLabel(requestedDur)} required</p>
+            ${roomResultsHTML}`;
+        } else {
+          const labelSuffix = requestedDur ? ` — ${durLabel(requestedDur)} requested` : "";
+          results.innerHTML = `
+            <p class="results-section-label">${selected === "all" ? "Available slots by room" : `Available slots — ${selected}`}${labelSuffix}</p>
             ${roomResultsHTML}
           `;
         }
