@@ -45,6 +45,21 @@ This project was developed using AI-assisted tools including Replit AI and ChatG
 * UI improvements
 * Debugging
 
+## Business Value
+
+This application helps recreation facilities:
+- Reduce manual scheduling time
+- Improve space utilization
+- Minimize booking conflicts
+- Enable faster decision-making
+
+## Future Improvements
+
+- Integration with real CRM systems
+- Advanced AI-based scheduling optimization
+- Real-time booking updates
+- Multi-user support
+
 ## Team Members
 
 * Rahat Akbari, Hajra Anwar, Mohamad Hemadi, Olutito Mebude, and Nolan Sun 
