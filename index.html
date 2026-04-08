@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Facility Scheduler</title>
+  <title>Reserve-IT</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
@@ -483,18 +483,20 @@
     }
 
     .feedback-panel.warn {
-      background: rgba(245,158,11,0.07);
-      border: 1px solid rgba(245,158,11,0.2);
+      background: rgba(245,158,11,0.08);
+      border: 1px solid rgba(245,158,11,0.25);
+      border-left: 3px solid rgba(245,158,11,0.75);
     }
 
     .feedback-panel.err {
-      background: rgba(239,68,68,0.07);
-      border: 1px solid rgba(239,68,68,0.2);
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.30);
+      border-left: 3px solid #ef4444;
     }
 
     .feedback-icon {
-      width: 34px;
-      height: 34px;
+      width: 36px;
+      height: 36px;
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -502,8 +504,8 @@
       flex-shrink: 0;
     }
 
-    .feedback-icon.warn { background: rgba(245,158,11,0.12); }
-    .feedback-icon.err  { background: rgba(239,68,68,0.12); }
+    .feedback-icon.warn { background: rgba(245,158,11,0.16); }
+    .feedback-icon.err  { background: rgba(239,68,68,0.18); }
 
     .feedback-body { display: flex; flex-direction: column; gap: 4px; }
 
@@ -513,8 +515,13 @@
       margin: 0;
     }
 
-    .feedback-title.warn { color: #fbbf24; }
-    .feedback-title.err  { color: #f87171; }
+    .feedback-title.warn { color: #b45309; }
+    .feedback-title.err  { color: #dc2626; }
+
+    /* "Error: " prefix added via CSS so it appears on every error panel title */
+    .feedback-title.err::before {
+      content: "Error: ";
+    }
 
     .feedback-sub {
       font-size: 0.77rem;
@@ -523,15 +530,28 @@
       line-height: 1.55;
     }
 
+    /* Error sub-text is red so the whole panel reads as one unified error */
+    .feedback-panel.err .feedback-sub {
+      color: #b91c1c;
+      font-weight: 500;
+    }
+
     .feedback-hint {
       font-size: 0.72rem;
       color: #475569;
       margin: 6px 0 0;
       padding: 8px 12px;
       background: rgba(15,23,42,0.04);
-      border-left: 2px solid rgba(239,68,68,0.35);
+      border-left: 2px solid rgba(100,116,139,0.25);
       border-radius: 0 4px 4px 0;
       line-height: 1.55;
+    }
+
+    /* Error hints stay in the red context */
+    .feedback-panel.err .feedback-hint {
+      background: rgba(239,68,68,0.06);
+      border-left-color: rgba(239,68,68,0.40);
+      color: #7f1d1d;
     }
 
     .feedback-panel.info {
@@ -773,47 +793,75 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 20px;
-      padding: 60px 24px;
+      gap: 18px;
+      padding: 56px 24px;
       text-align: center;
     }
 
+    /* Ring spinner — primary visual for loading state */
+    .analyzing-ring {
+      position: relative;
+      width: 56px;
+      height: 56px;
+      flex-shrink: 0;
+    }
+
+    .analyzing-ring::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid rgba(99,102,241,0.15);
+    }
+
+    .analyzing-ring::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      border-top-color: #6366f1;
+      border-right-color: rgba(99,102,241,0.4);
+      animation: spin 0.85s linear infinite;
+    }
+
+    /* Pulsing dots beneath the ring */
     .analyzing-dots {
       display: flex;
-      gap: 9px;
+      gap: 7px;
       align-items: center;
     }
 
     .analyzing-dot {
-      width: 11px;
-      height: 11px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: #6366f1;
       animation: dot-pulse 1.3s ease-in-out infinite;
     }
 
     .analyzing-dot:nth-child(1) { animation-delay: 0s;    background: #4f46e5; }
-    .analyzing-dot:nth-child(2) { animation-delay: 0.2s;  background: #6366f1; }
-    .analyzing-dot:nth-child(3) { animation-delay: 0.4s;  background: #818cf8; }
+    .analyzing-dot:nth-child(2) { animation-delay: 0.22s; background: #6366f1; }
+    .analyzing-dot:nth-child(3) { animation-delay: 0.44s; background: #818cf8; }
 
     @keyframes dot-pulse {
-      0%, 80%, 100% { transform: scale(0.55); opacity: 0.35; }
-      40%            { transform: scale(1.25); opacity: 1; }
+      0%, 80%, 100% { transform: scale(0.55); opacity: 0.30; }
+      40%            { transform: scale(1.3);  opacity: 1; }
     }
 
     .analyzing-label {
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       font-weight: 700;
-      color: #818cf8;
-      letter-spacing: 0.01em;
+      color: #4f46e5;
+      letter-spacing: -0.01em;
       margin: 0;
     }
 
     .analyzing-sub {
-      font-size: 0.75rem;
-      color: #475569;
+      font-size: 0.74rem;
+      color: #64748b;
       margin: 0;
       line-height: 1.6;
+      max-width: 300px;
     }
 
     /* Kept for .btn-spinner usage */
@@ -834,6 +882,9 @@
       gap: 10px;
     }
 
+    /* Collapse the status div when empty so it doesn't add dead space */
+    #upload-status:empty { display: none; }
+
     .upload-zone {
       position: relative;
       display: flex;
@@ -841,7 +892,7 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 24px 28px;
+      padding: 30px 28px;
       background: rgba(99,102,241,0.03);
       border: 1.5px dashed rgba(99,102,241,0.22);
       border-radius: 16px;
@@ -888,6 +939,51 @@
       background: rgba(16,185,129,0.07);
     }
 
+    .upload-zone.invalid {
+      border-style: solid;
+      border-color: rgba(239,68,68,0.40);
+      background: rgba(239,68,68,0.04);
+    }
+
+    .upload-zone.invalid:hover {
+      border-color: rgba(239,68,68,0.62);
+      background: rgba(239,68,68,0.07);
+    }
+
+    .upz-error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      animation: upz-pop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .upz-error-icon {
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(239,68,68,0.12);
+      border-radius: 50%;
+    }
+
+    .upz-error-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #ef4444;
+      max-width: 280px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .upz-error-meta {
+      font-size: 0.72rem;
+      color: #ef4444;
+      opacity: 0.75;
+    }
+
     /* Icon container */
     .upz-icon {
       width: 52px;
@@ -923,54 +1019,6 @@
       color: #818cf8;
       text-decoration: underline;
       text-decoration-color: rgba(129,140,248,0.35);
-    }
-
-    /* ── Sample data row ── */
-    .sample-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 2px 10px;
-    }
-
-    .sample-divider {
-      flex: 1;
-      height: 1px;
-      background: #e2e8f0;
-    }
-
-    .sample-or {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: #94a3b8;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .sample-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 16px;
-      background: transparent;
-      border: 1.5px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #6366f1;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.16s, border-color 0.16s, color 0.16s;
-      white-space: nowrap;
-    }
-
-    .sample-btn:hover {
-      background: rgba(99,102,241,0.07);
-      border-color: #818cf8;
-    }
-
-    .sample-btn:active {
-      background: rgba(99,102,241,0.13);
     }
 
     .upz-cols {
@@ -1123,49 +1171,69 @@
       letter-spacing: 0.01em;
     }
 
-    /* ── Engine status badge ── */
-    .engine-status {
+    /* ── Topbar right-side group ── */
+    .topbar-right {
       display: flex;
       align-items: center;
-      gap: 8px;
-      background: rgba(16,185,129,0.06);
-      border: 1px solid rgba(16,185,129,0.14);
+      gap: 10px;
+    }
+
+    /* ── System status pill ── */
+    .sys-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px 5px 9px;
       border-radius: 999px;
-      padding: 5px 13px 5px 10px;
-    }
-
-    .engine-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #10b981;
-      flex-shrink: 0;
-      animation: engine-pulse 2.4s ease-in-out infinite;
-    }
-
-    @keyframes engine-pulse {
-      0%, 100% { box-shadow: 0 0 0 0   rgba(16,185,129,0.55); opacity: 1; }
-      50%       { box-shadow: 0 0 0 5px rgba(16,185,129,0);    opacity: 0.8; }
-    }
-
-    .engine-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: #64748b;
-      letter-spacing: 0.02em;
+      border: 1px solid transparent;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
       white-space: nowrap;
+      transition: background 0.25s, border-color 0.25s;
     }
 
-    .engine-badge {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: #10b981;
-      background: rgba(16,185,129,0.12);
-      border-radius: 4px;
-      padding: 2px 7px;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
+    .sys-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: background 0.25s;
     }
+
+    .sys-text { color: inherit; }
+
+    /* Ready — subtle neutral */
+    .sys-status.ready {
+      background: rgba(15,23,42,0.04);
+      border-color: rgba(15,23,42,0.08);
+      color: #64748b;
+    }
+    .sys-status.ready .sys-dot { background: #10b981; }
+
+    /* Processing — amber, dot pulses */
+    .sys-status.processing {
+      background: rgba(245,158,11,0.07);
+      border-color: rgba(245,158,11,0.20);
+      color: #92400e;
+    }
+    .sys-status.processing .sys-dot {
+      background: #f59e0b;
+      animation: sys-pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes sys-pulse {
+      0%, 100% { opacity: 1;   transform: scale(1);   }
+      50%       { opacity: 0.3; transform: scale(0.75); }
+    }
+
+    /* Error — red */
+    .sys-status.error {
+      background: rgba(239,68,68,0.07);
+      border-color: rgba(239,68,68,0.22);
+      color: #991b1b;
+    }
+    .sys-status.error .sys-dot { background: #ef4444; }
 
     /* ── Dashboard main area ── */
     .dashboard {
@@ -1230,7 +1298,7 @@
     .panel-divider {
       height: 1px;
       background: #f0f3f8;
-      margin: 16px 0;
+      margin: 14px 0;
     }
 
     /* Compact the empty state when nested in schedule-view (vs results panel) */
@@ -1347,14 +1415,15 @@
           </svg>
         </div>
         <div class="brand-text">
-          <span class="brand-name">AI Facility Scheduler</span>
-          <span class="brand-tag">Optimize space usage with AI-powered scheduling</span>
+          <span class="brand-name">Reserve-IT</span>
+          <span class="brand-tag">AI-Powered Facility Scheduling System</span>
         </div>
       </div>
-      <div class="engine-status">
-        <span class="engine-dot"></span>
-        <span class="engine-label">AI Scheduling Engine</span>
-        <span class="engine-badge">Active</span>
+      <div class="topbar-right">
+        <div id="sysStatus" class="sys-status ready">
+          <span class="sys-dot"></span>
+          <span class="sys-text">System Status: <strong>Ready</strong></span>
+        </div>
       </div>
     </div>
   </header>
@@ -1398,6 +1467,7 @@
             </div>
 
             <!-- Loaded state (hidden until file parsed) -->
+            <!-- Success state -->
             <div class="upz-loaded" id="upzLoaded" style="display:none">
               <div class="upz-loaded-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -1409,22 +1479,22 @@
               <span class="upz-loaded-replace">Click to replace file</span>
             </div>
 
+            <!-- Error/invalid state -->
+            <div class="upz-error" id="upzError" style="display:none">
+              <div class="upz-error-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="9" stroke="#ef4444" stroke-width="2"/>
+                  <path d="M15 9l-6 6M9 9l6 6" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <span class="upz-error-name" id="upzErrorName">—</span>
+              <span class="upz-error-meta" id="upzErrorMeta"></span>
+              <span class="upz-loaded-replace">Click to replace file</span>
+            </div>
+
             <input type="file" id="scheduleFile" accept=".xlsx,.csv" style="display:none" onchange="handleFileUpload(event)"/>
           </label>
           <div id="upload-status"></div>
-          <div class="sample-row">
-            <span class="sample-divider"></span>
-            <span class="sample-or">or</span>
-            <button class="sample-btn" onclick="loadSampleData()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                <rect x="9" y="3" width="6" height="4" rx="1" stroke="currentColor" stroke-width="2"/>
-                <path d="M9 12h6M9 16h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
-              Use Sample Data
-            </button>
-            <span class="sample-divider"></span>
-          </div>
         </div>
 
         <div class="panel-divider"></div>
@@ -1443,7 +1513,7 @@
             </div>
             <div>
               <h3 class="query-title">Find Availability</h3>
-              <p class="panel-sub">Configure your query and initiate the AI analysis engine</p>
+              <p class="panel-sub">Configure your query to find available time slots</p>
             </div>
           </div>
           <div class="controls-wrap">
@@ -1504,7 +1574,7 @@
               <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
             </svg>
             <p class="no-schedule-title">No schedule data imported</p>
-            <p class="no-schedule-sub">Import a schedule file in the <strong>Schedule Overview</strong> panel to activate the AI analysis engine.</p>
+            <p class="no-schedule-sub">Import a schedule file above to view the schedule and find available time slots.</p>
           </div>
         </section>
       </div>
@@ -1594,67 +1664,6 @@
         rooms.map(r => `<option value="${r.name}">${r.name}</option>`).join("");
     }
 
-    /* ── Sample data loader ── */
-    function loadSampleData() {
-      rooms = [
-        {
-          name: "Gymnasium",
-          bookings: [
-            { start: 7,    end: 8.5  },
-            { start: 10,   end: 12   },
-            { start: 14,   end: 15.5 },
-            { start: 18,   end: 19.5 }
-          ]
-        },
-        {
-          name: "Swimming Pool",
-          bookings: [
-            { start: 8,    end: 10   },
-            { start: 11,   end: 13   },
-            { start: 17,   end: 20   }
-          ]
-        },
-        {
-          name: "Meeting Room A",
-          bookings: [
-            { start: 9,    end: 10   },
-            { start: 10.5, end: 12   },
-            { start: 13,   end: 14.5 },
-            { start: 15,   end: 16   },
-            { start: 16.5, end: 18   }
-          ]
-        },
-        {
-          name: "Conference Room",
-          bookings: [
-            { start: 9,    end: 11   },
-            { start: 14,   end: 17   }
-          ]
-        }
-      ];
-
-      updateRoomSelect();
-      renderSchedule();
-
-      document.getElementById("upload-status").innerHTML = "";
-      document.getElementById("upzIdle").style.display   = "none";
-      document.getElementById("upzLoaded").style.display = "flex";
-      document.getElementById("upzFileName").textContent = "Sample Schedule";
-      document.getElementById("upzFileMeta").textContent =
-        "4 rooms · 14 bookings (demo data)";
-      document.getElementById("uploadZone").classList.add("loaded");
-
-      document.getElementById("results").innerHTML = `
-        <div class="no-schedule-state">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-            <path d="M12 16V8M12 8l-3 3M12 8l3 3" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke="#6366f1" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-          <p class="no-schedule-title" style="color:#10b981">Sample data loaded — AI engine ready</p>
-          <p class="no-schedule-sub">4 rooms and 14 bookings have been pre-loaded. Select a room filter and click <strong>Run Analysis</strong> to see the scheduler in action.</p>
-        </div>`;
-    }
-
     /* ── File upload handler ── */
     function handleFileUpload(e) {
       const file = e.target.files[0];
@@ -1718,40 +1727,52 @@
               <p class="no-schedule-sub">Select a room filter and click <strong>Run Analysis</strong> to generate AI-powered availability recommendations.</p>
             </div>`;
 
-          // Switch zone to loaded state
-          zone.classList.remove("dragover");
-          zone.classList.add("loaded");
-          document.getElementById("upzIdle").style.display   = "none";
-          const loadedEl = document.getElementById("upzLoaded");
-          loadedEl.style.display = "flex";
-          document.getElementById("upzFileName").textContent = file.name;
-          document.getElementById("upzFileMeta").textContent =
-            `${rows.length} row${rows.length !== 1 ? "s" : ""} · ${parsed.length} room${parsed.length !== 1 ? "s" : ""} found`;
+          // Update zone state: green success OR red invalid — never mix
+          document.getElementById("upzIdle").style.display = "none";
 
-          // Show a warning if any rows had invalid time data, otherwise clear
           if (invalidCount > 0) {
+            // ── Invalid data → red zone, red error panel ──────────────────
+            setSysStatus("error");
+            zone.classList.remove("dragover", "loaded");
+            zone.classList.add("invalid");
+            document.getElementById("upzLoaded").style.display = "none";
+            document.getElementById("upzError").style.display  = "flex";
+            document.getElementById("upzErrorName").textContent = file.name;
+            document.getElementById("upzErrorMeta").textContent =
+              `${invalidCount} row${invalidCount !== 1 ? "s" : ""} with invalid time data`;
             status.innerHTML = `
-              <div class="feedback-panel warn">
-                <div class="feedback-icon warn">
+              <div class="feedback-panel err">
+                <div class="feedback-icon err">
                   <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-                    <path d="M12 9v4M12 17h.01" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
-                    <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="#f59e0b" stroke-width="2" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="9" stroke="#f87171" stroke-width="2"/>
+                    <path d="M15 9l-6 6M9 9l6 6" stroke="#f87171" stroke-width="2" stroke-linecap="round"/>
                   </svg>
                 </div>
                 <div class="feedback-body">
-                  <p class="feedback-title warn">Invalid time data detected</p>
+                  <p class="feedback-title err">Invalid time data detected</p>
                   <p class="feedback-sub">Invalid time data detected. Please check your schedule file.</p>
                   <p class="feedback-hint">${invalidCount} row${invalidCount !== 1 ? "s" : ""} skipped — times must be numbers between 7:00 and 23:00, with Start Time before End Time.</p>
                 </div>
               </div>`;
           } else {
+            // ── All valid → green zone, no status message ─────────────────
+            setSysStatus("ready");
+            zone.classList.remove("dragover", "invalid");
+            zone.classList.add("loaded");
+            document.getElementById("upzLoaded").style.display = "flex";
+            document.getElementById("upzError").style.display  = "none";
+            document.getElementById("upzFileName").textContent = file.name;
+            document.getElementById("upzFileMeta").textContent =
+              `${rows.length} row${rows.length !== 1 ? "s" : ""} · ${parsed.length} room${parsed.length !== 1 ? "s" : ""} found`;
             status.innerHTML = "";
           }
         } catch (err) {
           // On error: revert to idle state
-          zone.classList.remove("loaded");
+          setSysStatus("error");
+          zone.classList.remove("loaded", "invalid");
           document.getElementById("upzIdle").style.display   = "flex";
           document.getElementById("upzLoaded").style.display = "none";
+          document.getElementById("upzError").style.display  = "none";
           // Custom validation errors carry err.hint; native parse/read errors do not
           const isCustom = Boolean(err.hint);
           const subText  = isCustom
@@ -1779,9 +1800,11 @@
 
       // FileReader OS-level failure (permissions, corrupt binary at read time, etc.)
       reader.onerror = function() {
-        zone.classList.remove("loaded");
+        setSysStatus("error");
+        zone.classList.remove("loaded", "invalid");
         document.getElementById("upzIdle").style.display   = "flex";
         document.getElementById("upzLoaded").style.display = "none";
+        document.getElementById("upzError").style.display  = "none";
         status.innerHTML = `
           <div class="feedback-panel err">
             <div class="feedback-icon err">
@@ -1838,7 +1861,19 @@
       return `${h} hr${h !== 1 ? "s" : ""} ${m} min`;
     }
 
-    /* ── Merge overlapping/adjacent bookings into non-overlapping spans ── */
+    /* ── System status indicator ── */
+    function setSysStatus(state) {
+      const el = document.getElementById("sysStatus");
+      if (!el) return;
+      el.className = "sys-status " + state;
+      const labels = {
+        ready:      "System Status: <strong>Ready</strong>",
+        processing: "System Status: <strong>Processing…</strong>",
+        error:      "System Status: <strong>Error</strong>"
+      };
+      el.querySelector(".sys-text").innerHTML = labels[state] || labels.ready;
+    }
+
     function mergeBookings(bookings) {
       if (!bookings.length) return [];
       const sorted = [...bookings].sort((a, b) => a.start - b.start);
@@ -1960,17 +1995,21 @@
       const rawDur = parseFloat(document.getElementById("durationInput").value);
       const requestedDur = (!isNaN(rawDur) && rawDur > 0) ? rawDur : null;
 
+      setSysStatus("processing");
       btn.disabled = true;
       btn.innerHTML = `<div class="btn-spinner"></div> Analyzing…`;
       results.innerHTML = `
         <div class="analyzing">
+          <div class="analyzing-ring"></div>
+          <div>
+            <p class="analyzing-label">Analyzing schedule…</p>
+          </div>
           <div class="analyzing-dots">
             <div class="analyzing-dot"></div>
             <div class="analyzing-dot"></div>
             <div class="analyzing-dot"></div>
           </div>
-          <p class="analyzing-label">AI engine processing schedule data…</p>
-          <p class="analyzing-sub">Evaluating booking patterns and computing optimal availability windows</p>
+          <p class="analyzing-sub">Evaluating booking patterns and computing availability windows</p>
         </div>
       `;
 
@@ -2138,6 +2177,7 @@
           `;
         }
 
+        setSysStatus("ready");
         btn.disabled = false;
         btn.innerHTML = `
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
