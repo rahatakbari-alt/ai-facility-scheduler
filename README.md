@@ -1,4 +1,4 @@
-# AI Facility Scheduler
+# Reserve-IT: AI-Assisted Facility Scheduler
 
 ## Overview
 
@@ -28,7 +28,7 @@ This application uses AI-assisted logic to analyze scheduling data and identify 
 
 * Upload schedule via CSV (CRM export)
 * Multi-room support (Gym, Pool, Meeting Rooms)
-* AI-recommended best time slot
+* Rule-based recommended best time slot (AI-assisted logic)
 * Automated availability detection
 * Clean and simple user interface
 
@@ -50,13 +50,19 @@ Note: The current system uses rule-based logic for recommendations, with future 
 
 ## How to Use
 
-1. Open index.html in a web browser
-2. Upload a CSV file with columns:
+Option 1 (Recommended):
+1. Open the live application link above
+2. Upload a CSV file with the required format:
    - Room
    - Start Time
    - End Time
 3. Click "Find Open Slots"
-4. View AI-recommended time slots
+4. View available and recommended time slots
+
+Option 2 (Local):
+1. Download the repository
+2. Open index.html in a web browser
+3. Follow the same steps as above
 
 ## AI-Assisted Development
 
@@ -75,7 +81,7 @@ AI acted as a co-developer, accelerating development while requiring human valid
 
 ### Key Insight
 
-AI significantly accelerated development but required human validation...
+AI significantly accelerated the development process by enabling rapid prototyping and iteration. However, the quality of outputs depended heavily on prompt clarity and required continuous validation, highlighting the importance of combining AI capabilities with human oversight and critical thinking.
 
 ## Business Value
 
@@ -102,7 +108,9 @@ These limitations represent opportunities for future development.
 
 ## System Flow
 
-CSV Upload → Data Processing → Availability Detection → Recommended Time Slot Output
+The system follows a simple data processing pipeline:
+
+CSV Upload → Data Parsing → Booking Organization → Gap Detection → Time Slot Recommendation
 
 ## Team Members
 
